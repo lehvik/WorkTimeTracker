@@ -1,0 +1,1026 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="description" content="Erfasse deine Arbeitszeiten einfach und zuverlässig">
+  <meta name="theme-color" content="#0f4c5c">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Zeiterfassung">
+
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="apple-touch-icon" href="icon-192.png">
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <title>Arbeitszeit Tracker</title>
+  <style>
+    :root {
+      --bg-1: #f7efe5;
+      --bg-2: #e6f2f0;
+      --surface: #ffffff;
+      --ink: #1c1c1c;
+      --muted: #5f6368;
+      --primary: #0f4c5c;
+      --accent: #e36414;
+      --success: #2a9d8f;
+      --warn: #e9c46a;
+      --error: #e76f51;
+      --shadow: 0 20px 60px rgba(15, 76, 92, 0.2);
+      --radius: 18px;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Space Grotesk', system-ui, sans-serif;
+      background: radial-gradient(circle at top left, var(--bg-2), var(--bg-1));
+      min-height: 100vh;
+      padding: 24px;
+      color: var(--ink);
+    }
+
+    .container {
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: var(--surface);
+      border-radius: var(--radius);
+      padding: 28px;
+      box-shadow: var(--shadow);
+      border: 1px solid rgba(15, 76, 92, 0.08);
+    }
+
+    h1 {
+      font-size: 28px;
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 14px;
+      margin-bottom: 24px;
+    }
+
+    .setup-screen,
+    .main-screen {
+      display: none;
+    }
+
+    .setup-screen.active,
+    .main-screen.active {
+      display: block;
+    }
+
+    .info-box {
+      background: #f0f6f5;
+      border-left: 4px solid var(--primary);
+      padding: 16px;
+      margin-bottom: 20px;
+      border-radius: 8px;
+      font-size: 14px;
+      line-height: 1.6;
+      color: #1b3a40;
+    }
+
+    .info-box strong {
+      display: block;
+      margin-bottom: 8px;
+      color: var(--primary);
+    }
+
+    .form-group {
+      margin-bottom: 16px;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--ink);
+    }
+
+    input[type="text"],
+    input[type="password"],
+    input[type="time"],
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid #d9e1e3;
+      border-radius: 10px;
+      font-size: 14px;
+      background: #fff;
+      transition: border-color 0.2s;
+    }
+
+    input:focus,
+    select:focus {
+      outline: none;
+      border-color: var(--primary);
+    }
+
+    .hint {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 6px;
+    }
+
+    button {
+      width: 100%;
+      padding: 14px 16px;
+      border: none;
+      border-radius: 12px;
+      font-size: 15px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+      font-family: inherit;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--primary), #185e68);
+      color: white;
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 10px 20px rgba(15, 76, 92, 0.2);
+    }
+
+    .btn-secondary {
+      background: #f2f2f2;
+      color: #2f2f2f;
+    }
+
+    .btn-secondary:hover {
+      background: #e8e8e8;
+    }
+
+    .status-display {
+      background: #f7faf9;
+      padding: 16px;
+      border-radius: 12px;
+      margin-bottom: 20px;
+      text-align: center;
+      border: 1px solid #e2ecec;
+    }
+
+    .current-date {
+      font-size: 16px;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+
+    .current-status {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--primary);
+    }
+
+    .connection-status {
+      margin-top: 8px;
+      font-size: 12px;
+      color: var(--muted);
+    }
+
+    .controls {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 20px;
+    }
+
+    .tracking-buttons {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 20px;
+    }
+
+    .track-btn {
+      padding: 18px;
+      border-radius: 14px;
+      color: white;
+      text-align: left;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .track-btn .time {
+      display: block;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 12px;
+      margin-top: 6px;
+      opacity: 0.9;
+    }
+
+    .track-btn.secondary {
+      background: #e0e6e8;
+      color: #667;
+    }
+
+    .track-btn.completed {
+      background: #9bb3b6;
+      color: white;
+    }
+
+    .track-btn.depart-home { background: linear-gradient(135deg, #264653, #2a9d8f); }
+    .track-btn.arrive-work { background: linear-gradient(135deg, #1d3557, #457b9d); }
+    .track-btn.depart-work { background: linear-gradient(135deg, #6a4c93, #8e6dd3); }
+    .track-btn.arrive-home { background: linear-gradient(135deg, #f4a261, #e76f51); }
+    .track-btn.work-start { background: linear-gradient(135deg, #0f4c5c, #2a9d8f); }
+    .track-btn.work-end { background: linear-gradient(135deg, #e76f51, #f4a261); }
+
+    .tools {
+      display: grid;
+      gap: 12px;
+      margin-bottom: 12px;
+    }
+
+    .settings-btn {
+      background: #f5f5f5;
+      color: #4b4b4b;
+    }
+
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: #323232;
+      color: white;
+      padding: 14px 22px;
+      border-radius: 8px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1000;
+    }
+
+    .toast.show { opacity: 1; }
+    .toast.success { background: var(--success); }
+    .toast.error { background: var(--error); }
+
+    .modal {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      z-index: 1001;
+    }
+
+    .modal.active { display: flex; }
+
+    .modal-card {
+      background: white;
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 420px;
+      box-shadow: var(--shadow);
+    }
+
+    .modal-card h2 {
+      font-size: 20px;
+      margin-bottom: 8px;
+    }
+
+    .modal-actions {
+      display: grid;
+      gap: 10px;
+      margin-top: 16px;
+    }
+
+    .manual-time {
+      display: none;
+      margin-top: 12px;
+      gap: 10px;
+    }
+
+    .manual-time.active {
+      display: grid;
+    }
+
+    .note {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 8px;
+    }
+
+    @media (max-width: 600px) {
+      body { padding: 16px; }
+      .card { padding: 22px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card setup-screen active" id="setupScreen">
+      <h1>Einrichtung</h1>
+      <p class="subtitle">Verbinde die App mit deinem Google Sheet</p>
+
+      <div class="info-box">
+        <strong>Einmalige Vorbereitung</strong>
+        Apps Script einrichten, Token setzen und die Web-App-URL eintragen.
+      </div>
+
+      <form id="setupForm">
+        <div class="form-group">
+          <label for="appsScriptUrl">Apps Script Web-App-URL *</label>
+          <input type="text" id="appsScriptUrl" placeholder="https://script.google.com/macros/s/.../exec" required>
+          <div class="hint">URL aus der Apps-Script-Bereitstellung</div>
+        </div>
+
+        <div class="form-group">
+          <label for="apiToken">Token *</label>
+          <input type="password" id="apiToken" placeholder="Dein geheimes Token" required>
+          <div class="hint">Muss mit dem Token in Code.gs übereinstimmen</div>
+        </div>
+
+        <button type="submit" class="btn-primary">Verbindung testen & speichern</button>
+      </form>
+    </div>
+
+    <div class="card main-screen" id="mainScreen">
+      <h1>Arbeitszeit Tracker</h1>
+      <p class="subtitle">Event-Log mit automatischer Auswertung</p>
+
+      <div class="status-display">
+        <div class="current-date" id="currentDate"></div>
+        <div class="current-status" id="currentStatus">Bereit</div>
+        <div class="connection-status" id="connectionStatus">Prüfe Verbindung…</div>
+      </div>
+
+      <div class="controls">
+        <div class="form-group">
+          <label for="workMode">Arbeitsmodus</label>
+          <select id="workMode">
+            <option value="pendeln">Pendeln (Büro/Kunde)</option>
+            <option value="buero_stempeln">Stempeln Büro</option>
+            <option value="homeoffice">HomeOffice</option>
+            <option value="urlaub">Urlaub</option>
+            <option value="ueberstundenabbau">Überstundenabbau</option>
+            <option value="sonderurlaub">Sonderurlaub</option>
+            <option value="krank">Krank</option>
+            <option value="feiertag">Feiertag</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="dayFraction">Tagesanteil</label>
+          <select id="dayFraction">
+            <option value="1.0">Ganzer Tag (1.0)</option>
+            <option value="0.5">Halber Tag (0.5)</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="workPlaceGroup">
+          <label for="workPlace">Einsatzort</label>
+          <select id="workPlace">
+            <option value="buero">Büro</option>
+            <option value="kunde">Kunde</option>
+            <option value="dienstreise">Dienstreise</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="tracking-buttons">
+        <button class="track-btn depart-home" data-type="depart_home">
+          Losfahren Zuhause
+          <span class="time" id="time-depart_home"></span>
+        </button>
+
+        <button class="track-btn arrive-work" data-type="arrive_work">
+          Ankommen Arbeit
+          <span class="time" id="time-arrive_work"></span>
+        </button>
+
+        <button class="track-btn depart-work" data-type="depart_work">
+          Losfahren Arbeit
+          <span class="time" id="time-depart_work"></span>
+        </button>
+
+        <button class="track-btn arrive-home" data-type="arrive_home">
+          Ankommen Zuhause
+          <span class="time" id="time-arrive_home"></span>
+        </button>
+
+        <button class="track-btn work-start" data-type="work_start">
+          Arbeitsbeginn
+          <span class="time" id="time-work_start"></span>
+        </button>
+
+        <button class="track-btn work-end" data-type="work_end">
+          Arbeitsende
+          <span class="time" id="time-work_end"></span>
+        </button>
+      </div>
+
+      <div class="tools">
+        <button class="btn-secondary" id="copyCsvLink">CSV-Link für Excel kopieren</button>
+        <button class="settings-btn" id="settingsBtn">Einstellungen ändern</button>
+      </div>
+
+      <div class="note" id="queueNote"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <div class="modal" id="correctionModal">
+    <div class="modal-card">
+      <h2>Eintrag bereits vorhanden</h2>
+      <p id="correctionText"></p>
+      <div class="modal-actions">
+        <button class="btn-primary" id="modalNow">Aktuelle Zeit nehmen</button>
+        <button class="btn-secondary" id="modalManual">Manuell eingeben</button>
+        <button class="btn-secondary" id="modalCancel">Abbrechen</button>
+      </div>
+      <div class="manual-time" id="manualTimeRow">
+        <input type="time" id="manualTimeInput" step="60">
+        <button class="btn-primary" id="manualTimeSave">Zeit speichern</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const config = {
+      appsScriptUrl: '',
+      token: ''
+    };
+
+    const state = {
+      date: '',
+      mode: 'pendeln',
+      dayFraction: '1.0',
+      workPlace: 'buero',
+      events: {
+        depart_home: '',
+        arrive_work: '',
+        depart_work: '',
+        arrive_home: '',
+        work_start: '',
+        work_end: ''
+      }
+    };
+
+    let queue = [];
+    let correctionHandler = null;
+
+    function init() {
+      loadConfig();
+      loadQueue();
+      updateDate();
+      setInterval(updateDate, 1000);
+
+      if (config.appsScriptUrl && config.token) {
+        showMainScreen();
+        loadTodayState();
+      } else {
+        showSetupScreen();
+      }
+
+      document.getElementById('setupForm').addEventListener('submit', handleSetup);
+      document.getElementById('settingsBtn').addEventListener('click', showSetupScreen);
+      document.getElementById('workMode').addEventListener('change', handleDayChange);
+      document.getElementById('dayFraction').addEventListener('change', handleDayChange);
+      document.getElementById('workPlace').addEventListener('change', handleDayChange);
+      document.getElementById('copyCsvLink').addEventListener('click', copyCsvLink);
+
+      document.querySelectorAll('.track-btn').forEach(btn => {
+        btn.addEventListener('click', () => handleTrack(btn.dataset.type));
+      });
+
+      document.getElementById('modalNow').addEventListener('click', () => handleCorrection('now'));
+      document.getElementById('modalManual').addEventListener('click', () => handleCorrection('manual'));
+      document.getElementById('modalCancel').addEventListener('click', closeCorrectionModal);
+      document.getElementById('manualTimeSave').addEventListener('click', saveManualTime);
+
+      window.addEventListener('online', () => {
+        updateConnectionStatus();
+        flushQueue();
+      });
+      window.addEventListener('offline', updateConnectionStatus);
+
+      updateConnectionStatus();
+      updateButtons();
+      if (navigator.onLine) {
+        flushQueue();
+      }
+    }
+
+    function loadConfig() {
+      const saved = localStorage.getItem('timetracker-config');
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        config.appsScriptUrl = parsed.appsScriptUrl || '';
+        config.token = parsed.token || '';
+      }
+    }
+
+    function saveConfig() {
+      localStorage.setItem('timetracker-config', JSON.stringify(config));
+    }
+
+    function loadQueue() {
+      const saved = localStorage.getItem('timetracker-queue');
+      if (saved) queue = JSON.parse(saved);
+    }
+
+    function saveQueue() {
+      localStorage.setItem('timetracker-queue', JSON.stringify(queue));
+      updateConnectionStatus();
+    }
+
+    function updateDate() {
+      const now = new Date();
+      const dateStr = now.toLocaleDateString('de-DE', {
+        weekday: 'long',
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric'
+      });
+      document.getElementById('currentDate').textContent = dateStr;
+    }
+
+    function showSetupScreen() {
+      document.getElementById('setupScreen').classList.add('active');
+      document.getElementById('mainScreen').classList.remove('active');
+      document.getElementById('appsScriptUrl').value = config.appsScriptUrl || '';
+      document.getElementById('apiToken').value = config.token || '';
+    }
+
+    function showMainScreen() {
+      document.getElementById('setupScreen').classList.remove('active');
+      document.getElementById('mainScreen').classList.add('active');
+    }
+
+    async function handleSetup(e) {
+      e.preventDefault();
+      const url = document.getElementById('appsScriptUrl').value.trim();
+      const token = document.getElementById('apiToken').value.trim();
+
+      if (!url || !token) {
+        showToast('Bitte URL und Token eingeben', 'error');
+        return;
+      }
+
+      showToast('Verbindung wird getestet…');
+      const ok = await testConnection(url, token);
+
+      if (ok) {
+        config.appsScriptUrl = url;
+        config.token = token;
+        saveConfig();
+        showToast('Verbindung erfolgreich!', 'success');
+        setTimeout(() => {
+          showMainScreen();
+          loadTodayState();
+        }, 800);
+      } else {
+        showToast('Verbindung fehlgeschlagen', 'error');
+      }
+    }
+
+    async function testConnection(url, token) {
+      try {
+        const response = await fetch(`${url}?action=test&token=${encodeURIComponent(token)}`);
+        const data = await response.json();
+        return response.ok && data.success;
+      } catch (error) {
+        return false;
+      }
+    }
+
+    async function loadTodayState() {
+      state.date = getLocalDateString();
+
+      const cached = localStorage.getItem(`timetracker-cache-${state.date}`);
+      if (cached) {
+        applyCachedState(JSON.parse(cached));
+      }
+
+      if (!navigator.onLine) {
+        updateConnectionStatus();
+        return;
+      }
+
+      try {
+        const url = `${config.appsScriptUrl}?action=getToday&token=${encodeURIComponent(config.token)}&date=${encodeURIComponent(state.date)}`;
+        const response = await fetch(url);
+        const data = await response.json();
+
+        if (response.ok && data.success && data.data) {
+          applyRemoteState(data.data);
+        }
+      } catch (error) {
+        showToast('Fehler beim Laden', 'error');
+      } finally {
+        updateButtons();
+        updateStatusText();
+      }
+    }
+
+    function applyCachedState(data) {
+      if (data.day) {
+        state.mode = data.day.mode || state.mode;
+        state.dayFraction = data.day.day_fraction || state.dayFraction;
+        state.workPlace = data.day.work_place || state.workPlace;
+      }
+
+      if (data.events) {
+        Object.keys(state.events).forEach(key => {
+          state.events[key] = data.events[key] || '';
+        });
+      }
+
+      updateControls();
+      updateButtons();
+      updateStatusText();
+    }
+
+    function applyRemoteState(data) {
+      if (data.day) {
+        state.mode = data.day.mode || state.mode;
+        state.dayFraction = data.day.day_fraction || state.dayFraction;
+        state.workPlace = data.day.work_place || state.workPlace;
+      }
+
+      if (data.events) {
+        Object.keys(state.events).forEach(key => {
+          state.events[key] = data.events[key] || '';
+        });
+      }
+
+      cacheToday();
+      updateControls();
+      updateButtons();
+      updateStatusText();
+    }
+
+    function cacheToday() {
+      const payload = {
+        day: {
+          mode: state.mode,
+          day_fraction: state.dayFraction,
+          work_place: state.workPlace
+        },
+        events: state.events
+      };
+      localStorage.setItem(`timetracker-cache-${state.date}`, JSON.stringify(payload));
+    }
+
+    function updateControls() {
+      document.getElementById('workMode').value = state.mode;
+      document.getElementById('dayFraction').value = state.dayFraction;
+      document.getElementById('workPlace').value = state.workPlace;
+      document.getElementById('workPlaceGroup').style.display = state.mode === 'pendeln' ? 'block' : 'none';
+    }
+
+    function handleDayChange() {
+      const selectedMode = document.getElementById('workMode').value;
+      if (selectedMode !== state.mode && hasAnyEvent()) {
+        const proceed = confirm('Modus wechseln? Vorhandene Zeiten bleiben bestehen.');
+        if (!proceed) {
+          document.getElementById('workMode').value = state.mode;
+          return;
+        }
+      }
+
+      state.mode = selectedMode;
+      state.dayFraction = document.getElementById('dayFraction').value;
+      state.workPlace = document.getElementById('workPlace').value;
+
+      updateControls();
+      updateButtons();
+      updateStatusText();
+      cacheToday();
+      sendDayState();
+    }
+
+    function hasAnyEvent() {
+      return Object.values(state.events).some(value => value);
+    }
+
+    function updateButtons() {
+      const mode = state.mode;
+      const commuteButtons = ['depart_home', 'arrive_work', 'depart_work', 'arrive_home'];
+      const workButtons = ['work_start', 'work_end'];
+
+      commuteButtons.forEach(type => toggleButton(type, mode === 'pendeln'));
+      workButtons.forEach(type => toggleButton(type, mode === 'buero_stempeln' || mode === 'homeoffice'));
+
+      if (mode === 'urlaub' || mode === 'ueberstundenabbau' || mode === 'sonderurlaub' || mode === 'krank' || mode === 'feiertag') {
+        commuteButtons.concat(workButtons).forEach(type => toggleButton(type, false));
+      }
+
+      updateButtonStates();
+    }
+
+    function toggleButton(type, show) {
+      const btn = document.querySelector(`[data-type="${type}"]`);
+      if (btn) btn.style.display = show ? 'block' : 'none';
+    }
+
+    function updateButtonStates() {
+      const visibleButtons = Array.from(document.querySelectorAll('.track-btn')).filter(btn => btn.style.display !== 'none');
+      let nextIndex = -1;
+
+      visibleButtons.forEach((btn, index) => {
+        const type = btn.dataset.type;
+        const time = state.events[type];
+        const timeEl = document.getElementById(`time-${type}`);
+        if (timeEl) {
+          timeEl.textContent = time ? `✓ ${time}` : '';
+        }
+
+        if (time) {
+          btn.classList.add('completed');
+          btn.classList.remove('secondary');
+        } else {
+          btn.classList.remove('completed');
+          if (nextIndex === -1) {
+            nextIndex = index;
+            btn.classList.remove('secondary');
+          } else {
+            btn.classList.add('secondary');
+          }
+        }
+      });
+    }
+
+    function updateStatusText() {
+      const statusEl = document.getElementById('currentStatus');
+      const lastEvent = Object.entries(state.events)
+        .filter(([, time]) => time)
+        .pop();
+
+      if (!lastEvent) {
+        statusEl.textContent = `Bereit – Modus: ${modeLabel(state.mode)}`;
+        return;
+      }
+
+      statusEl.textContent = `Letzter Eintrag: ${eventLabel(lastEvent[0])} um ${lastEvent[1]}`;
+    }
+
+    function handleTrack(type) {
+      const existing = state.events[type];
+      if (existing) {
+        openCorrectionModal(type, existing);
+        return;
+      }
+      recordEvent(type, getTimeString());
+    }
+
+    function openCorrectionModal(type, existing) {
+      correctionHandler = { type };
+      document.getElementById('correctionText').textContent = `${eventLabel(type)} wurde bereits um ${existing} erfasst.`;
+      document.getElementById('manualTimeRow').classList.remove('active');
+      document.getElementById('manualTimeInput').value = existing;
+      document.getElementById('correctionModal').classList.add('active');
+    }
+
+    function closeCorrectionModal() {
+      correctionHandler = null;
+      document.getElementById('correctionModal').classList.remove('active');
+      document.getElementById('manualTimeRow').classList.remove('active');
+    }
+
+    function handleCorrection(action) {
+      if (!correctionHandler) return;
+      if (action === 'now') {
+        recordEvent(correctionHandler.type, getTimeString());
+        closeCorrectionModal();
+      } else if (action === 'manual') {
+        document.getElementById('manualTimeRow').classList.add('active');
+      }
+    }
+
+    function saveManualTime() {
+      if (!correctionHandler) return;
+      const time = document.getElementById('manualTimeInput').value;
+      if (!time) {
+        showToast('Bitte eine Zeit eingeben', 'error');
+        return;
+      }
+      recordEvent(correctionHandler.type, time);
+      closeCorrectionModal();
+    }
+
+    function recordEvent(type, time) {
+      const payload = buildEventPayload(type, time);
+      state.events[type] = time;
+      cacheToday();
+      updateButtonStates();
+      updateStatusText();
+
+      sendPayload('event', payload);
+      showToast(`${eventLabel(type)} um ${time} gespeichert`, 'success');
+    }
+
+    function buildEventPayload(type, time) {
+      const today = getLocalDateString();
+      state.date = today;
+      return {
+        event_id: crypto.randomUUID(),
+        recorded_at: toLocalISOString(),
+        event_date: today,
+        event_time: time,
+        event_type: type,
+        source: getSource(),
+        note: ''
+      };
+    }
+
+    function buildDayPayload() {
+      const today = getLocalDateString();
+      state.date = today;
+      return {
+        day_id: crypto.randomUUID(),
+        date: today,
+        mode: state.mode,
+        day_fraction: state.dayFraction,
+        work_place: state.workPlace,
+        recorded_at: toLocalISOString(),
+        source: getSource(),
+        note: ''
+      };
+    }
+
+    function sendDayState() {
+      const payload = buildDayPayload();
+      sendPayload('day', payload);
+    }
+
+    async function sendPayload(action, payload) {
+      if (!config.appsScriptUrl || !config.token) return;
+
+      if (!navigator.onLine) {
+        enqueue(action, payload);
+        return;
+      }
+
+      try {
+        const response = await fetch(config.appsScriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action, token: config.token, payload })
+        });
+
+        const data = await response.json();
+        if (!response.ok || !data.success) {
+          enqueue(action, payload);
+        }
+      } catch (error) {
+        enqueue(action, payload);
+      }
+    }
+
+    function enqueue(action, payload) {
+      queue.push({ type: action === 'event' ? 'event' : 'day', payload, queued_at: toLocalISOString() });
+      saveQueue();
+      showToast('Offline gespeichert – wird später gesendet', 'success');
+    }
+
+    async function flushQueue() {
+      if (!navigator.onLine || queue.length === 0 || !config.appsScriptUrl) {
+        updateConnectionStatus();
+        return;
+      }
+
+      const events = queue.filter(item => item.type === 'event').map(item => item.payload);
+      const days = queue.filter(item => item.type === 'day').map(item => item.payload);
+
+      try {
+        const response = await fetch(config.appsScriptUrl, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'bulk', token: config.token, events, days })
+        });
+        const data = await response.json();
+
+        if (response.ok && data.success) {
+          queue = [];
+          saveQueue();
+          showToast('Synchronisiert', 'success');
+        }
+      } catch (error) {
+        updateConnectionStatus();
+      }
+    }
+
+    function updateConnectionStatus() {
+      const statusEl = document.getElementById('connectionStatus');
+      const noteEl = document.getElementById('queueNote');
+      const online = navigator.onLine;
+
+      if (online) {
+        if (queue.length > 0) {
+          statusEl.textContent = `Online – ${queue.length} Einträge warten auf Sync`;
+          noteEl.textContent = 'Synchronisierung läuft, sobald Verbindung stabil ist.';
+        } else {
+          statusEl.textContent = 'Online – synchronisiert';
+          noteEl.textContent = '';
+        }
+      } else {
+        statusEl.textContent = `Offline – ${queue.length} Einträge gespeichert`;
+        noteEl.textContent = 'Einträge werden automatisch gesendet, sobald du wieder online bist.';
+      }
+    }
+
+    function modeLabel(mode) {
+      const labels = {
+        pendeln: 'Pendeln',
+        buero_stempeln: 'Stempeln Büro',
+        homeoffice: 'HomeOffice',
+        urlaub: 'Urlaub',
+        ueberstundenabbau: 'Überstundenabbau',
+        sonderurlaub: 'Sonderurlaub',
+        krank: 'Krank',
+        feiertag: 'Feiertag'
+      };
+      return labels[mode] || mode;
+    }
+
+    function eventLabel(type) {
+      const labels = {
+        depart_home: 'Losfahren Zuhause',
+        arrive_work: 'Ankommen Arbeit',
+        depart_work: 'Losfahren Arbeit',
+        arrive_home: 'Ankommen Zuhause',
+        work_start: 'Arbeitsbeginn',
+        work_end: 'Arbeitsende'
+      };
+      return labels[type] || type;
+    }
+
+    function getSource() {
+      return /Mobi|Android/i.test(navigator.userAgent) ? 'phone' : 'pc';
+    }
+
+    function getLocalDateString() {
+      const now = new Date();
+      return `${now.getFullYear()}-${pad2(now.getMonth() + 1)}-${pad2(now.getDate())}`;
+    }
+
+    function getTimeString() {
+      const now = new Date();
+      return `${pad2(now.getHours())}:${pad2(now.getMinutes())}`;
+    }
+
+    function toLocalISOString() {
+      const date = new Date();
+      const tzOffset = -date.getTimezoneOffset();
+      const sign = tzOffset >= 0 ? '+' : '-';
+      const absOffset = Math.abs(tzOffset);
+      const offsetHours = Math.floor(absOffset / 60);
+      const offsetMinutes = absOffset % 60;
+
+      return `${date.getFullYear()}-${pad2(date.getMonth() + 1)}-${pad2(date.getDate())}` +
+        `T${pad2(date.getHours())}:${pad2(date.getMinutes())}:${pad2(date.getSeconds())}` +
+        `${sign}${pad2(offsetHours)}:${pad2(offsetMinutes)}`;
+    }
+
+    function pad2(value) {
+      return value < 10 ? `0${value}` : `${value}`;
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast show ${type}`;
+      setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function copyCsvLink() {
+      if (!config.appsScriptUrl || !config.token) return;
+      const link = `${config.appsScriptUrl}?action=summaryCsv&token=${encodeURIComponent(config.token)}`;
+      navigator.clipboard.writeText(link).then(() => {
+        showToast('CSV-Link kopiert', 'success');
+      }).catch(() => {
+        showToast('Kopieren fehlgeschlagen', 'error');
+      });
+    }
+
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('service-worker.js').catch(() => {});
+      });
+    }
+
+    init();
+  </script>
+</body>
+</html>
