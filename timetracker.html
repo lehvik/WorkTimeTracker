@@ -115,6 +115,8 @@
     input[type="text"],
     input[type="password"],
     input[type="time"],
+    input[type="date"],
+    textarea,
     select {
       width: 100%;
       padding: 12px 14px;
@@ -126,7 +128,8 @@
     }
 
     input:focus,
-    select:focus {
+    select:focus,
+    textarea:focus {
       outline: none;
       border-color: var(--primary);
     }
@@ -199,6 +202,63 @@
       display: grid;
       gap: 12px;
       margin-bottom: 20px;
+    }
+
+    .controls.compact {
+      margin-bottom: 0;
+    }
+
+    .settings-summary,
+    .project-summary {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding: 14px 16px;
+      border-radius: 14px;
+      background: #f7faf9;
+      border: 1px solid #e2ecec;
+      margin-bottom: 16px;
+    }
+
+    .summary-card {
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .summary-card:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 12px 24px rgba(15, 76, 92, 0.12);
+    }
+
+    .summary-card:focus-visible {
+      outline: 2px solid rgba(15, 76, 92, 0.35);
+      outline-offset: 2px;
+    }
+
+    .summary-label {
+      font-size: 12px;
+      color: var(--muted);
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+
+    .summary-value {
+      font-weight: 600;
+      font-size: 15px;
+    }
+
+    .summary-sub {
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .btn-small {
+      padding: 10px 12px;
+      font-size: 13px;
+      border-radius: 10px;
+      width: auto;
     }
 
     .tracking-buttons {
@@ -292,9 +352,21 @@
       box-shadow: var(--shadow);
     }
 
+    .modal-card.large {
+      max-width: 520px;
+    }
+
+    .modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 8px;
+    }
+
     .modal-card h2 {
       font-size: 20px;
-      margin-bottom: 8px;
+      margin-bottom: 0;
     }
 
     .modal-actions {
@@ -304,13 +376,8 @@
     }
 
     .manual-time {
-      display: none;
-      margin-top: 12px;
-      gap: 10px;
-    }
-
-    .manual-time.active {
       display: grid;
+      gap: 10px;
     }
 
     .note {
@@ -319,9 +386,70 @@
       margin-top: 8px;
     }
 
+    .drawer {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.35);
+      display: none;
+      justify-content: flex-end;
+      z-index: 1002;
+    }
+
+    .drawer.active {
+      display: flex;
+    }
+
+    .drawer-panel {
+      background: white;
+      width: min(420px, 90vw);
+      padding: 22px;
+      height: 100%;
+      box-shadow: -10px 0 40px rgba(15, 76, 92, 0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .drawer-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .drawer-header h2 {
+      font-size: 20px;
+    }
+
+    .icon-btn {
+      background: #f2f2f2;
+      border: none;
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .range-inputs {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+
+    .sub-label {
+      font-size: 12px;
+      color: var(--muted);
+      margin-bottom: 4px;
+      display: block;
+    }
+
     @media (max-width: 600px) {
       body { padding: 16px; }
-      .card { padding: 22px; }
+      .card { padding: 20px; }
     }
   </style>
 </head>
@@ -363,36 +491,19 @@
         <div class="connection-status" id="connectionStatus">Prüfe Verbindung…</div>
       </div>
 
-      <div class="controls">
-        <div class="form-group">
-          <label for="workMode">Arbeitsmodus</label>
-          <select id="workMode">
-            <option value="pendeln">Pendeln (Büro/Kunde)</option>
-            <option value="buero_stempeln">Stempeln Büro</option>
-            <option value="homeoffice">HomeOffice</option>
-            <option value="urlaub">Urlaub</option>
-            <option value="ueberstundenabbau">Überstundenabbau</option>
-            <option value="sonderurlaub">Sonderurlaub</option>
-            <option value="krank">Krank</option>
-            <option value="feiertag">Feiertag</option>
-          </select>
+      <div class="settings-summary summary-card" id="settingsSummary" role="button" tabindex="0" aria-label="Statusdetails öffnen">
+        <div>
+          <div class="summary-label">Status</div>
+          <div class="summary-value" id="summaryMode">Pendeln · Ganzer Tag · Büro</div>
+          <div class="summary-sub" id="summaryAbsence"></div>
         </div>
+      </div>
 
-        <div class="form-group">
-          <label for="dayFraction">Tagesanteil</label>
-          <select id="dayFraction">
-            <option value="1.0">Ganzer Tag (1.0)</option>
-            <option value="0.5">Halber Tag (0.5)</option>
-          </select>
-        </div>
-
-        <div class="form-group" id="workPlaceGroup">
-          <label for="workPlace">Einsatzort</label>
-          <select id="workPlace">
-            <option value="buero">Büro</option>
-            <option value="kunde">Kunde</option>
-            <option value="dienstreise">Dienstreise</option>
-          </select>
+      <div class="project-summary summary-card" id="projectSummaryCard" role="button" tabindex="0" aria-label="Projektmaske öffnen">
+        <div>
+          <div class="summary-label">Thema/Projekt</div>
+          <div class="summary-value" id="projectSummary">Noch nicht erfasst</div>
+          <div class="summary-sub" id="projectDescription"></div>
         </div>
       </div>
 
@@ -445,13 +556,93 @@
       <p id="correctionText"></p>
       <div class="modal-actions">
         <button class="btn-primary" id="modalNow">Aktuelle Zeit nehmen</button>
-        <button class="btn-secondary" id="modalManual">Manuell eingeben</button>
+        <div class="manual-time active" id="manualTimeRow">
+          <input type="time" id="manualTimeInput" step="60" aria-label="Zeit (manuell)">
+          <button class="btn-primary" id="manualTimeSave">Zeit speichern</button>
+        </div>
+        <button class="btn-secondary" id="modalProject">Projekt/Notiz anpassen</button>
         <button class="btn-secondary" id="modalCancel">Abbrechen</button>
       </div>
-      <div class="manual-time" id="manualTimeRow">
-        <input type="time" id="manualTimeInput" step="60">
-        <button class="btn-primary" id="manualTimeSave">Zeit speichern</button>
+    </div>
+  </div>
+
+  <div class="modal" id="projectModal">
+    <div class="modal-card large">
+      <div class="modal-header">
+        <h2>Projekt / Thema des Tages</h2>
+        <button class="icon-btn" id="closeProjectModal" aria-label="Schließen">×</button>
       </div>
+      <p class="note">Wähle ein vorhandenes Projekt oder tippe einen neuen Namen ein.</p>
+      <div class="form-group">
+        <label for="projectName">Projekt / Thema *</label>
+        <input type="text" id="projectName" list="projectOptions" placeholder="z.B. Kundenprojekt X">
+        <datalist id="projectOptions"></datalist>
+      </div>
+      <div class="form-group">
+        <label for="projectDescriptionInput">Beschreibung</label>
+        <textarea id="projectDescriptionInput" rows="3" placeholder="Kurzbeschreibung oder Fokus des Tages"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-primary" id="projectSave">Speichern</button>
+        <button class="btn-secondary" id="projectCancel">Abbrechen</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="drawer" id="settingsDrawer">
+    <div class="drawer-panel">
+      <div class="drawer-header">
+        <h2>Modus & Details</h2>
+        <button class="icon-btn" id="closeSettings" aria-label="Schließen">×</button>
+      </div>
+      <div class="controls compact">
+        <div class="form-group">
+          <label for="workMode">Arbeitsmodus</label>
+          <select id="workMode">
+            <option value="pendeln">Pendeln (Büro/Kunde)</option>
+            <option value="buero_stempeln">Stempeln Büro</option>
+            <option value="homeoffice">HomeOffice</option>
+            <option value="urlaub">Urlaub</option>
+            <option value="ueberstundenabbau">Überstundenabbau</option>
+            <option value="sonderurlaub">Sonderurlaub</option>
+            <option value="krank">Krank</option>
+            <option value="feiertag">Feiertag</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="dayFraction">Tagesanteil</label>
+          <select id="dayFraction">
+            <option value="1.0">Ganzer Tag (1.0)</option>
+            <option value="0.5">Halber Tag (0.5)</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="workPlaceGroup">
+          <label for="workPlace">Einsatzort</label>
+          <select id="workPlace">
+            <option value="buero">Büro</option>
+            <option value="kunde">Kunde</option>
+            <option value="dienstreise">Dienstreise</option>
+          </select>
+        </div>
+
+        <div class="form-group" id="absenceRangeGroup">
+          <label>Zeitraum (bei Abwesenheit)</label>
+          <div class="range-inputs">
+            <div>
+              <label class="sub-label" for="absenceStart">Von</label>
+              <input type="date" id="absenceStart">
+            </div>
+            <div>
+              <label class="sub-label" for="absenceEnd">Bis</label>
+              <input type="date" id="absenceEnd">
+            </div>
+          </div>
+          <div class="hint">Für Urlaub, Krankheit oder Abwesenheit erfassen.</div>
+        </div>
+      </div>
+      <button class="btn-primary" id="saveSettings">Speichern</button>
     </div>
   </div>
 
@@ -466,6 +657,14 @@
       mode: 'pendeln',
       dayFraction: '1.0',
       workPlace: 'buero',
+      project: {
+        name: '',
+        description: ''
+      },
+      absence: {
+        start: '',
+        end: ''
+      },
       events: {
         depart_home: '',
         arrive_work: '',
@@ -478,6 +677,8 @@
 
     let queue = [];
     let correctionHandler = null;
+    let pendingProjectEvent = null;
+    let projects = [];
 
     function init() {
       loadConfig();
@@ -494,17 +695,41 @@
 
       document.getElementById('setupForm').addEventListener('submit', handleSetup);
       document.getElementById('settingsBtn').addEventListener('click', showSetupScreen);
-      document.getElementById('workMode').addEventListener('change', handleDayChange);
-      document.getElementById('dayFraction').addEventListener('change', handleDayChange);
-      document.getElementById('workPlace').addEventListener('change', handleDayChange);
+      document.getElementById('settingsSummary').addEventListener('click', openSettingsDrawer);
+      document.getElementById('settingsSummary').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openSettingsDrawer();
+        }
+      });
+      document.getElementById('closeSettings').addEventListener('click', closeSettingsDrawer);
+      document.getElementById('saveSettings').addEventListener('click', () => handleDayChange({ closeDrawer: true }));
+      document.getElementById('settingsDrawer').addEventListener('click', (event) => {
+        if (event.target.id === 'settingsDrawer') closeSettingsDrawer();
+      });
+      document.getElementById('workMode').addEventListener('change', handleModeChange);
+      document.getElementById('dayFraction').addEventListener('change', updatePendingSettings);
+      document.getElementById('workPlace').addEventListener('change', updatePendingSettings);
+      document.getElementById('absenceStart').addEventListener('change', updatePendingSettings);
+      document.getElementById('absenceEnd').addEventListener('change', updatePendingSettings);
       document.getElementById('copyCsvLink').addEventListener('click', copyCsvLink);
+      document.getElementById('projectSummaryCard').addEventListener('click', openProjectModal);
+      document.getElementById('projectSummaryCard').addEventListener('keydown', (event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault();
+          openProjectModal();
+        }
+      });
+      document.getElementById('closeProjectModal').addEventListener('click', closeProjectModal);
+      document.getElementById('projectSave').addEventListener('click', saveProject);
+      document.getElementById('projectCancel').addEventListener('click', closeProjectModal);
 
       document.querySelectorAll('.track-btn').forEach(btn => {
         btn.addEventListener('click', () => handleTrack(btn.dataset.type));
       });
 
       document.getElementById('modalNow').addEventListener('click', () => handleCorrection('now'));
-      document.getElementById('modalManual').addEventListener('click', () => handleCorrection('manual'));
+      document.getElementById('modalProject').addEventListener('click', openProjectModal);
       document.getElementById('modalCancel').addEventListener('click', closeCorrectionModal);
       document.getElementById('manualTimeSave').addEventListener('click', saveManualTime);
 
@@ -516,6 +741,9 @@
 
       updateConnectionStatus();
       updateButtons();
+      loadProjects();
+      updateProjectSummary();
+      updateSummary();
       if (navigator.onLine) {
         flushQueue();
       }
@@ -638,6 +866,10 @@
         state.mode = data.day.mode || state.mode;
         state.dayFraction = data.day.day_fraction || state.dayFraction;
         state.workPlace = data.day.work_place || state.workPlace;
+        state.project.name = data.day.project_name || state.project.name;
+        state.project.description = data.day.project_description || state.project.description;
+        state.absence.start = data.day.absence_start || state.absence.start;
+        state.absence.end = data.day.absence_end || state.absence.end;
       }
 
       if (data.events) {
@@ -649,6 +881,8 @@
       updateControls();
       updateButtons();
       updateStatusText();
+      updateProjectSummary();
+      updateSummary();
     }
 
     function applyRemoteState(data) {
@@ -656,6 +890,10 @@
         state.mode = data.day.mode || state.mode;
         state.dayFraction = data.day.day_fraction || state.dayFraction;
         state.workPlace = data.day.work_place || state.workPlace;
+        state.project.name = data.day.project_name || state.project.name;
+        state.project.description = data.day.project_description || state.project.description;
+        state.absence.start = data.day.absence_start || state.absence.start;
+        state.absence.end = data.day.absence_end || state.absence.end;
       }
 
       if (data.events) {
@@ -668,6 +906,8 @@
       updateControls();
       updateButtons();
       updateStatusText();
+      updateProjectSummary();
+      updateSummary();
     }
 
     function cacheToday() {
@@ -675,7 +915,11 @@
         day: {
           mode: state.mode,
           day_fraction: state.dayFraction,
-          work_place: state.workPlace
+          work_place: state.workPlace,
+          project_name: state.project.name,
+          project_description: state.project.description,
+          absence_start: state.absence.start,
+          absence_end: state.absence.end
         },
         events: state.events
       };
@@ -686,10 +930,18 @@
       document.getElementById('workMode').value = state.mode;
       document.getElementById('dayFraction').value = state.dayFraction;
       document.getElementById('workPlace').value = state.workPlace;
+      if (isAbsenceMode(state.mode) && !state.absence.start) {
+        const today = getLocalDateString();
+        state.absence.start = today;
+        state.absence.end = state.absence.end || today;
+      }
+      document.getElementById('absenceStart').value = state.absence.start;
+      document.getElementById('absenceEnd').value = state.absence.end;
       document.getElementById('workPlaceGroup').style.display = state.mode === 'pendeln' ? 'block' : 'none';
+      document.getElementById('absenceRangeGroup').style.display = isAbsenceMode(state.mode) ? 'block' : 'none';
     }
 
-    function handleDayChange() {
+    function handleModeChange() {
       const selectedMode = document.getElementById('workMode').value;
       if (selectedMode !== state.mode && hasAnyEvent()) {
         const proceed = confirm('Modus wechseln? Vorhandene Zeiten bleiben bestehen.');
@@ -700,14 +952,62 @@
       }
 
       state.mode = selectedMode;
+      updatePendingSettings();
+    }
+
+    function updatePendingSettings() {
+      state.mode = document.getElementById('workMode').value;
       state.dayFraction = document.getElementById('dayFraction').value;
       state.workPlace = document.getElementById('workPlace').value;
+      const absenceStart = document.getElementById('absenceStart').value;
+      const absenceEnd = document.getElementById('absenceEnd').value;
+
+      if (isAbsenceMode(state.mode)) {
+        const today = getLocalDateString();
+        state.absence.start = absenceStart || state.absence.start || today;
+        state.absence.end = absenceEnd || state.absence.end || today;
+      } else {
+        state.absence.start = '';
+        state.absence.end = '';
+      }
 
       updateControls();
       updateButtons();
       updateStatusText();
+      updateSummary();
+    }
+
+    function handleDayChange(options = {}) {
+      let { closeDrawer } = options;
+      state.mode = document.getElementById('workMode').value;
+      state.dayFraction = document.getElementById('dayFraction').value;
+      state.workPlace = document.getElementById('workPlace').value;
+      const absenceStart = document.getElementById('absenceStart').value;
+      const absenceEnd = document.getElementById('absenceEnd').value;
+
+      if (isAbsenceMode(state.mode)) {
+        const today = getLocalDateString();
+        state.absence.start = absenceStart || state.absence.start || today;
+        state.absence.end = absenceEnd || state.absence.end || today;
+        document.getElementById('absenceStart').value = state.absence.start;
+        document.getElementById('absenceEnd').value = state.absence.end;
+      } else {
+        state.absence.start = '';
+        state.absence.end = '';
+      }
+
+      updateControls();
+      updateButtons();
+      updateStatusText();
+      updateSummary();
       cacheToday();
       sendDayState();
+      if (closeDrawer === undefined) {
+        closeDrawer = !isAbsenceMode(state.mode);
+      }
+      if (closeDrawer) {
+        closeSettingsDrawer();
+      }
     }
 
     function hasAnyEvent() {
@@ -722,7 +1022,7 @@
       commuteButtons.forEach(type => toggleButton(type, mode === 'pendeln'));
       workButtons.forEach(type => toggleButton(type, mode === 'buero_stempeln' || mode === 'homeoffice'));
 
-      if (mode === 'urlaub' || mode === 'ueberstundenabbau' || mode === 'sonderurlaub' || mode === 'krank' || mode === 'feiertag') {
+      if (isAbsenceMode(mode)) {
         commuteButtons.concat(workButtons).forEach(type => toggleButton(type, false));
       }
 
@@ -781,21 +1081,26 @@
         openCorrectionModal(type, existing);
         return;
       }
+      if (type === 'depart_work' && !state.project.name) {
+        pendingProjectEvent = { type, time: getTimeString() };
+        openProjectModal();
+        return;
+      }
       recordEvent(type, getTimeString());
     }
 
     function openCorrectionModal(type, existing) {
       correctionHandler = { type };
       document.getElementById('correctionText').textContent = `${eventLabel(type)} wurde bereits um ${existing} erfasst.`;
-      document.getElementById('manualTimeRow').classList.remove('active');
+      document.getElementById('manualTimeRow').classList.add('active');
       document.getElementById('manualTimeInput').value = existing;
+      activateManualTimeInput();
       document.getElementById('correctionModal').classList.add('active');
     }
 
     function closeCorrectionModal() {
       correctionHandler = null;
       document.getElementById('correctionModal').classList.remove('active');
-      document.getElementById('manualTimeRow').classList.remove('active');
     }
 
     function handleCorrection(action) {
@@ -803,9 +1108,19 @@
       if (action === 'now') {
         recordEvent(correctionHandler.type, getTimeString());
         closeCorrectionModal();
-      } else if (action === 'manual') {
-        document.getElementById('manualTimeRow').classList.add('active');
       }
+    }
+
+    function activateManualTimeInput() {
+      const manualRow = document.getElementById('manualTimeRow');
+      const manualInput = document.getElementById('manualTimeInput');
+      manualRow.classList.add('active');
+      requestAnimationFrame(() => {
+        manualInput.focus();
+        if (typeof manualInput.showPicker === 'function') {
+          manualInput.showPicker();
+        }
+      });
     }
 
     function saveManualTime() {
@@ -840,6 +1155,8 @@
         event_time: time,
         event_type: type,
         source: getSource(),
+        project_name: state.project.name,
+        project_description: state.project.description,
         note: ''
       };
     }
@@ -853,6 +1170,10 @@
         mode: state.mode,
         day_fraction: state.dayFraction,
         work_place: state.workPlace,
+        project_name: state.project.name,
+        project_description: state.project.description,
+        absence_start: state.absence.start,
+        absence_end: state.absence.end,
         recorded_at: toLocalISOString(),
         source: getSource(),
         note: ''
@@ -954,6 +1275,34 @@
       return labels[mode] || mode;
     }
 
+    function getSelectLabel(selectId) {
+      const select = document.getElementById(selectId);
+      const option = select.options[select.selectedIndex];
+      return option ? option.textContent : '';
+    }
+
+    function updateSummary() {
+      const modeText = modeLabel(state.mode);
+      const dayText = getSelectLabel('dayFraction').split('(')[0].trim();
+      const placeText = state.mode === 'pendeln' ? getSelectLabel('workPlace') : '—';
+      const summary = `${modeText} · ${dayText}${state.mode === 'pendeln' ? ` · ${placeText}` : ''}`;
+      document.getElementById('summaryMode').textContent = summary;
+
+      const absenceEl = document.getElementById('summaryAbsence');
+      if (isAbsenceMode(state.mode) && state.absence.start) {
+        const range = state.absence.end && state.absence.end !== state.absence.start
+          ? `${state.absence.start} bis ${state.absence.end}`
+          : state.absence.start;
+        absenceEl.textContent = `Zeitraum: ${range}`;
+      } else {
+        absenceEl.textContent = '';
+      }
+    }
+
+    function isAbsenceMode(mode) {
+      return ['urlaub', 'ueberstundenabbau', 'sonderurlaub', 'krank', 'feiertag'].includes(mode);
+    }
+
     function eventLabel(type) {
       const labels = {
         depart_home: 'Losfahren Zuhause',
@@ -1002,6 +1351,84 @@
       toast.textContent = message;
       toast.className = `toast show ${type}`;
       setTimeout(() => toast.classList.remove('show'), 3000);
+    }
+
+    function loadProjects() {
+      const saved = localStorage.getItem('timetracker-projects');
+      projects = saved ? JSON.parse(saved) : [];
+      renderProjectOptions();
+    }
+
+    function renderProjectOptions() {
+      const list = document.getElementById('projectOptions');
+      list.innerHTML = '';
+      projects.forEach(name => {
+        const option = document.createElement('option');
+        option.value = name;
+        list.appendChild(option);
+      });
+    }
+
+    function openProjectModal() {
+      document.getElementById('projectName').value = state.project.name;
+      document.getElementById('projectDescriptionInput').value = state.project.description;
+      document.getElementById('projectModal').classList.add('active');
+    }
+
+    function closeProjectModal(options = {}) {
+      const { preservePending } = options;
+      if (!preservePending) {
+        pendingProjectEvent = null;
+      }
+      document.getElementById('projectModal').classList.remove('active');
+    }
+
+    function saveProject() {
+      const name = document.getElementById('projectName').value.trim();
+      const description = document.getElementById('projectDescriptionInput').value.trim();
+      if (!name) {
+        showToast('Bitte ein Projekt/Thema angeben', 'error');
+        return;
+      }
+      state.project.name = name;
+      state.project.description = description;
+
+      if (!projects.includes(name)) {
+        projects.unshift(name);
+        localStorage.setItem('timetracker-projects', JSON.stringify(projects));
+        renderProjectOptions();
+      }
+
+      cacheToday();
+      updateProjectSummary();
+      sendDayState();
+      closeProjectModal({ preservePending: true });
+
+      if (pendingProjectEvent) {
+        const { type, time } = pendingProjectEvent;
+        pendingProjectEvent = null;
+        recordEvent(type, time);
+      }
+    }
+
+    function updateProjectSummary() {
+      const summaryEl = document.getElementById('projectSummary');
+      const descEl = document.getElementById('projectDescription');
+      if (state.project.name) {
+        summaryEl.textContent = state.project.name;
+        descEl.textContent = state.project.description || '';
+      } else {
+        summaryEl.textContent = 'Noch nicht erfasst';
+        descEl.textContent = '';
+      }
+    }
+
+    function openSettingsDrawer() {
+      document.getElementById('settingsDrawer').classList.add('active');
+    }
+
+    function closeSettingsDrawer() {
+      document.getElementById('settingsDrawer').classList.remove('active');
     }
 
     function copyCsvLink() {
