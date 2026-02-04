@@ -875,7 +875,7 @@
       try {
         const response = await fetch(config.appsScriptUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action, token: config.token, payload })
         });
 
@@ -906,7 +906,7 @@
       try {
         const response = await fetch(config.appsScriptUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
           body: JSON.stringify({ action: 'bulk', token: config.token, events, days })
         });
         const data = await response.json();
