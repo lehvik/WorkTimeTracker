@@ -343,7 +343,7 @@
 
     .modal-card h2 {
       font-size: 20px;
-      margin-bottom: 8px;
+      margin-bottom: 0;
     }
 
     .modal-actions {
@@ -1045,8 +1045,20 @@
         recordEvent(correctionHandler.type, getTimeString());
         closeCorrectionModal();
       } else if (action === 'manual') {
-        document.getElementById('manualTimeRow').classList.add('active');
+        activateManualTimeInput();
       }
+    }
+
+    function activateManualTimeInput() {
+      const manualRow = document.getElementById('manualTimeRow');
+      const manualInput = document.getElementById('manualTimeInput');
+      manualRow.classList.add('active');
+      requestAnimationFrame(() => {
+        manualInput.focus();
+        if (typeof manualInput.showPicker === 'function') {
+          manualInput.showPicker();
+        }
+      });
     }
 
     function saveManualTime() {
